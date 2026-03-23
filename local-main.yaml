@@ -1,5 +1,4 @@
-# OpenClash Local Main Config with Proxy Providers + SukkaW Rules
-# Based on clash2 format
+# OpenClash Local Main Config with Proxy Providers + SukkaW Rules + clash2 Groups
 
 port: 7890
 socks-port: 7891
@@ -7,7 +6,6 @@ redir-port: 7892
 tproxy-port: 7895
 mixed-port: 7893
 external-controller: 0.0.0.0:9090
-# external-ui disabled for docker test
 secret: "your-password-here"
 
 mode: rule
@@ -46,6 +44,7 @@ dns:
       - 127.0.0.0/8
       - 240.0.0.0/4
 
+# ========== Proxy Providers ==========
 proxy-providers:
   Airport-A:
     type: http
@@ -67,6 +66,7 @@ proxy-providers:
       url: http://www.gstatic.com/generate_204
       interval: 300
 
+# ========== Rule Providers (SukkaW) ==========
 rule-providers:
   reject-drop:
     type: http
@@ -116,6 +116,7 @@ rule-providers:
     path: ./rule_providers/reject-domain-extra.yaml
     interval: 86400
 
+# ========== Proxy Groups ==========
 proxy-groups:
   - name: Manual
     type: select
@@ -179,6 +180,66 @@ proxy-groups:
     filter: "(?i)^(?!.*仅海外用户)(?!.*游戏).*(美国|US)"
     url: http://www.gstatic.com/generate_204
     interval: 300
+
+  - name: GamePlatform
+    type: select
+    proxies:
+      - DIRECT
+      - Manual
+      - HK
+      - JP
+      - US
+      - Auto
+
+  - name: GameDownload
+    type: select
+    proxies:
+      - DIRECT
+      - Manual
+      - HK
+      - JP
+      - US
+      - Auto
+
+  - name: ChinaSites
+    type: select
+    proxies:
+      - DIRECT
+      - Manual
+      - HK
+      - Auto
+
+  - name: GlobalSites
+    type: select
+    proxies:
+      - Manual
+      - HK
+      - TW
+      - SG
+      - JP
+      - US
+      - Auto
+      - DIRECT
+
+  - name: GlobalStreaming
+    type: select
+    proxies:
+      - Manual
+      - HK
+      - TW
+      - SG
+      - JP
+      - US
+      - Auto
+      - DIRECT
+
+  - name: ChinaStreaming
+    type: select
+    proxies:
+      - DIRECT
+      - Manual
+      - HK
+      - Auto
 
   - name: Google
     type: select
@@ -294,15 +355,17 @@ rules:
   - DOMAIN-SUFFIX,time.apple.com,TimeSync
   - DOMAIN-SUFFIX,time.windows.com,TimeSync
 
-  # ========== OpenAI ==========
+  # ========== OpenAI (from clash2) ==========
   - DOMAIN-SUFFIX,ai.com,OpenAI
   - DOMAIN-SUFFIX,chatgpt.com,OpenAI
   - DOMAIN-SUFFIX,openai.com,OpenAI
   - DOMAIN-SUFFIX,auth0.com,OpenAI
   - DOMAIN-SUFFIX,claude.ai,OpenAI
+  - DOMAIN-SUFFIX,anthropic.com,OpenAI
+  - DOMAIN-SUFFIX,poe.com,OpenAI
   - DOMAIN-KEYWORD,openai,OpenAI
 
-  # ========== Google ==========
+  # ========== Google & YouTube ==========
   - DOMAIN-KEYWORD,google,Google
   - DOMAIN-SUFFIX,youtube.com,YouTube
   - DOMAIN-SUFFIX,ytimg.com,YouTube
@@ -334,6 +397,343 @@ rules:
   - DOMAIN-SUFFIX,apple.com,Apple
   - DOMAIN-SUFFIX,icloud.com,Apple
   - DOMAIN-SUFFIX,me.com,Apple
+
+  # ========== Game Platform (from clash2) ==========
+  - DOMAIN-SUFFIX,geforce.cn,GamePlatform
+  - DOMAIN-SUFFIX,geforce.co.kr,GamePlatform
+  - DOMAIN-SUFFIX,geforce.co.uk,GamePlatform
+  - DOMAIN-SUFFIX,geforce.com,GamePlatform
+  - DOMAIN-SUFFIX,geforce.com.tw,GamePlatform
+  - DOMAIN-SUFFIX,gputechconf.cn,GamePlatform
+  - DOMAIN-SUFFIX,gputechconf.co.kr,GamePlatform
+  - DOMAIN-SUFFIX,gputechconf.com,GamePlatform
+  - DOMAIN-SUFFIX,gputechconf.com.au,GamePlatform
+  - DOMAIN-SUFFIX,gputechconf.com.tw,GamePlatform
+  - DOMAIN-SUFFIX,gputechconf.eu,GamePlatform
+  - DOMAIN-SUFFIX,gputechconf.in,GamePlatform
+  - DOMAIN-SUFFIX,gputechconf.jp,GamePlatform
+  - DOMAIN-SUFFIX,nvda.d2.sc.omtrdc.net,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.asia,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.at,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.be,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.ch,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.cn,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.co.at,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.co.in,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.co.jp,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.co.kr,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.co.uk,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.com,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.com.au,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.com.br,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.com.mx,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.com.pe,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.com.pl,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.com.tr,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.com.tw,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.com.ua,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.com.ve,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.cz,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.de,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.dk,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.es,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.eu,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.fi,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.fr,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.in,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.it,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.jp,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.lu,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.mx,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.nl,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.no,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.pl,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.ro,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.ru,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.se,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.tt.omtrdc.net,GamePlatform
+  - DOMAIN-SUFFIX,nvidia.tw,GamePlatform
+  - DOMAIN-SUFFIX,nvidiaforhp.com,GamePlatform
+  - DOMAIN-SUFFIX,nvidiagrid.net,GamePlatform
+  - DOMAIN-SUFFIX,shotwithgeforce.com,GamePlatform
+  - DOMAIN-SUFFIX,tegrazone.co,GamePlatform
+  - DOMAIN-SUFFIX,tegrazone.co.kr,GamePlatform
+  - DOMAIN-SUFFIX,tegrazone.com,GamePlatform
+
+  # ========== Game Download (from clash2) ==========
+  - DOMAIN-SUFFIX,pdl.wow.battlenet.com.cn,GameDownload
+  - DOMAIN-SUFFIX,cdn.ubi.com,GameDownload
+  - DOMAIN-SUFFIX,dyn.riotcdn.net,GameDownload
+  - DOMAIN-SUFFIX,steamcontent.com,GameDownload
+  - DOMAIN-SUFFIX,cases77451.cdngold.me,GameDownload
+
+  # ========== Global Sites (from clash2) ==========
+  - DOMAIN-SUFFIX,1password.com,GlobalSites
+  - DOMAIN-SUFFIX,adguard.org,GlobalSites
+  - DOMAIN-SUFFIX,bit.no.com,GlobalSites
+  - DOMAIN-SUFFIX,btlibrary.me,GlobalSites
+  - DOMAIN-SUFFIX,cccat.io,GlobalSites
+  - DOMAIN-SUFFIX,chat.openai.com,GlobalSites
+  - DOMAIN-SUFFIX,cloudcone.com,GlobalSites
+  - DOMAIN-SUFFIX,dubox.com,GlobalSites
+  - DOMAIN-SUFFIX,gameloft.com,GlobalSites
+  - DOMAIN-SUFFIX,garena.com,GlobalSites
+  - DOMAIN-SUFFIX,hoyolab.com,GlobalSites
+  - DOMAIN-SUFFIX,inoreader.com,GlobalSites
+  - DOMAIN-SUFFIX,ip138.com,GlobalSites
+  - DOMAIN-SUFFIX,linkedin.com,GlobalSites
+  - DOMAIN-SUFFIX,myteamspeak.com,GlobalSites
+  - DOMAIN-SUFFIX,notion.so,GlobalSites
+  - DOMAIN-SUFFIX,openai.com,GlobalSites
+  - DOMAIN-SUFFIX,ping.pe,GlobalSites
+  - DOMAIN-SUFFIX,reddit.com,GlobalSites
+  - DOMAIN-SUFFIX,teddysun.com,GlobalSites
+  - DOMAIN-SUFFIX,tumbex.com,GlobalSites
+  - DOMAIN-SUFFIX,twdvd.com,GlobalSites
+  - DOMAIN-SUFFIX,unsplash.com,GlobalSites
+  - DOMAIN-SUFFIX,buzzsprout.com,GlobalSites
+  - DOMAIN-SUFFIX,eu,GlobalSites
+  - DOMAIN-SUFFIX,hk,GlobalSites
+  - DOMAIN-SUFFIX,jp,GlobalSites
+  - DOMAIN-SUFFIX,kr,GlobalSites
+  - DOMAIN-SUFFIX,sg,GlobalSites
+  - DOMAIN-SUFFIX,tw,GlobalSites
+  - DOMAIN-SUFFIX,uk,GlobalSites
+  - DOMAIN-SUFFIX,us,GlobalSites
+  - DOMAIN-SUFFIX,ca,GlobalSites
+  - DOMAIN-KEYWORD,1e100,GlobalSites
+  - DOMAIN-KEYWORD,abema,GlobalSites
+  - DOMAIN-KEYWORD,appledaily,GlobalSites
+  - DOMAIN-KEYWORD,avtb,GlobalSites
+  - DOMAIN-KEYWORD,beetalk,GlobalSites
+  - DOMAIN-KEYWORD,blogspot,GlobalSites
+  - DOMAIN-KEYWORD,dropbox,GlobalSites
+  - DOMAIN-KEYWORD,facebook,GlobalSites
+  - DOMAIN-KEYWORD,fbcdn,GlobalSites
+  - DOMAIN-KEYWORD,github,GlobalSites
+  - DOMAIN-KEYWORD,gmail,GlobalSites
+  - DOMAIN-KEYWORD,google,GlobalSites
+  - DOMAIN-KEYWORD,instagram,GlobalSites
+  - DOMAIN-KEYWORD,porn,GlobalSites
+  - DOMAIN-KEYWORD,sci-hub,GlobalSites
+  - DOMAIN-KEYWORD,spotify,GlobalSites
+  - DOMAIN-KEYWORD,telegram,GlobalSites
+  - DOMAIN-KEYWORD,twitter,GlobalSites
+  - DOMAIN-KEYWORD,whatsapp,GlobalSites
+  - DOMAIN-KEYWORD,youtube,GlobalSites
+  - DOMAIN-SUFFIX,gfwlist.start,GlobalSites
+  - DOMAIN-SUFFIX,000webhost.com,GlobalSites
+  - DOMAIN-SUFFIX,030buy.com,GlobalSites
+  - DOMAIN-SUFFIX,0rz.tw,GlobalSites
+  - DOMAIN-SUFFIX,1-apple.com.tw,GlobalSites
+  - DOMAIN-SUFFIX,10.tt,GlobalSites
+  - DOMAIN-SUFFIX,1000giri.net,GlobalSites
+  - DOMAIN-SUFFIX,100ke.org,GlobalSites
+  - DOMAIN-SUFFIX,10beasts.net,GlobalSites
+  - DOMAIN-SUFFIX,10conditionsoflove.com,GlobalSites
+  - DOMAIN-SUFFIX,10musume.com,GlobalSites
+  - DOMAIN-SUFFIX,123rf.com,GlobalSites
+  - DOMAIN-SUFFIX,12bet.com,GlobalSites
+  - DOMAIN-SUFFIX,12vpn.com,GlobalSites
+  - DOMAIN-SUFFIX,12vpn.net,GlobalSites
+  - DOMAIN-SUFFIX,1337x.to,GlobalSites
+  - DOMAIN-SUFFIX,138.com,GlobalSites
+  - DOMAIN-SUFFIX,141hongkong.com,GlobalSites
+  - DOMAIN-SUFFIX,141jj.com,GlobalSites
+  - DOMAIN-SUFFIX,141tube.com,GlobalSites
+  - DOMAIN-SUFFIX,1688.com.au,GlobalSites
+  - DOMAIN-SUFFIX,173ng.com,GlobalSites
+  - DOMAIN-SUFFIX,177pic.info,GlobalSites
+  - DOMAIN-SUFFIX,17t17p.com,GlobalSites
+  - DOMAIN-SUFFIX,18board.com,GlobalSites
+  - DOMAIN-SUFFIX,18board.info,GlobalSites
+  - DOMAIN-SUFFIX,18onlygirls.com,GlobalSites
+
+  # ========== China Sites (from clash2) ==========
+  - DOMAIN-SUFFIX,0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa,ChinaSites
+  - DOMAIN-SUFFIX,0.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,1.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.0.ip6.arpa,ChinaSites
+  - DOMAIN-SUFFIX,10.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,100.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,100.51.198.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,101.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,102.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,103.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,104.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,105.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,106.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,107.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,108.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,109.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,110.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,111.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,112.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,113.0.203.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,113.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,114.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,115.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,116.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,117.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,118.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,119.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,120.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,121.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,122.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,123.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,124.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,125.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,126.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,127.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,127.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,16.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,168.192.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,17.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,18.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,19.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,2.0.192.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,20.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,21.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,22.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,23.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,24.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,25.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,254.169.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,255.255.255.255.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,26.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,27.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,28.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,29.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,30.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,31.172.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,64.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,65.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,66.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,67.100.in-addr.arpa,ChinaSites
+  - DOMAIN-SUFFIX,68.100.in-addr.arpa,ChinaSites
+
+  # ========== Global Streaming (from clash2) ==========
+  - DOMAIN-SUFFIX,112263.com,GlobalStreaming
+  - DOMAIN-SUFFIX,20thcenturystudios.com.au,GlobalStreaming
+  - DOMAIN-SUFFIX,20thcenturystudios.com.br,GlobalStreaming
+  - DOMAIN-SUFFIX,20thcenturystudios.jp,GlobalStreaming
+  - DOMAIN-SUFFIX,4gtv.tv,GlobalStreaming
+  - DOMAIN-SUFFIX,5itv.tv,GlobalStreaming
+  - DOMAIN-SUFFIX,abc-studios.com,GlobalStreaming
+  - DOMAIN-SUFFIX,abc.com,GlobalStreaming
+  - DOMAIN-SUFFIX,abema-tv.com,GlobalStreaming
+  - DOMAIN-SUFFIX,abema.io,GlobalStreaming
+  - DOMAIN-SUFFIX,abema.tv,GlobalStreaming
+  - DOMAIN-SUFFIX,aboutamazon.com,GlobalStreaming
+  - DOMAIN-SUFFIX,adobedtm.com,GlobalStreaming
+  - DOMAIN-SUFFIX,adventuresbydisney.com,GlobalStreaming
+  - DOMAIN-SUFFIX,adx.promo,GlobalStreaming
+  - DOMAIN-SUFFIX,afewmomentswith.com,GlobalStreaming
+  - DOMAIN-SUFFIX,afp.com,GlobalStreaming
+  - DOMAIN-SUFFIX,afpforum.com,GlobalStreaming
+  - DOMAIN-SUFFIX,aiv-cdn.net,GlobalStreaming
+  - DOMAIN-SUFFIX,aiv-delivery.net,GlobalStreaming
+  - DOMAIN-SUFFIX,akamaized.net,GlobalStreaming
+  - DOMAIN-SUFFIX,amazon.jobs,GlobalStreaming
+  - DOMAIN-SUFFIX,amazonaws.co.uk,GlobalStreaming
+  - DOMAIN-SUFFIX,amazonaws.com,GlobalStreaming
+  - DOMAIN-SUFFIX,amazonprimevideos.com,GlobalStreaming
+  - DOMAIN-SUFFIX,amazontools.com,GlobalStreaming
+  - DOMAIN-SUFFIX,amazontours.com,GlobalStreaming
+  - DOMAIN-SUFFIX,amazonuniversity.jobs,GlobalStreaming
+  - DOMAIN-SUFFIX,amazonvideo.cc,GlobalStreaming
+  - DOMAIN-SUFFIX,amazonvideo.com,GlobalStreaming
+  - DOMAIN-SUFFIX,amazonvideodirect.cc,GlobalStreaming
+  - DOMAIN-SUFFIX,ameba.jp,GlobalStreaming
+  - DOMAIN-SUFFIX,amebame.com,GlobalStreaming
+  - DOMAIN-SUFFIX,amebaownd.com,GlobalStreaming
+  - DOMAIN-SUFFIX,amebaowndme.com,GlobalStreaming
+  - DOMAIN-SUFFIX,ameblo.jp,GlobalStreaming
+  - DOMAIN-SUFFIX,americasvoice.news,GlobalStreaming
+  - DOMAIN-SUFFIX,amerikaninsesi.com,GlobalStreaming
+  - DOMAIN-SUFFIX,amerikaninsesi.org,GlobalStreaming
+  - DOMAIN-SUFFIX,amerikaovozi.com,GlobalStreaming
+  - DOMAIN-SUFFIX,amerikayidzayn.com,GlobalStreaming
+  - DOMAIN-SUFFIX,amerikiskhma.com,GlobalStreaming
+  - DOMAIN-SUFFIX,amlg.io,GlobalStreaming
+  - DOMAIN-SUFFIX,anidom.com,GlobalStreaming
+  - DOMAIN-SUFFIX,api.tv.colnv.com,GlobalStreaming
+  - DOMAIN-SUFFIX,apple.news,GlobalStreaming
+  - DOMAIN-SUFFIX,applemusic.com,GlobalStreaming
+  - DOMAIN-SUFFIX,assetshuluimcom-a.akamaihd.net,GlobalStreaming
+  - DOMAIN-SUFFIX,att.tv,GlobalStreaming
+  - DOMAIN-SUFFIX,atttvnow.com,GlobalStreaming
+  - DOMAIN-SUFFIX,attwatchtv.com,GlobalStreaming
+  - DOMAIN-SUFFIX,atv-ext-eu.amazon.com,GlobalStreaming
+  - DOMAIN-SUFFIX,atv-ext-fe.amazon.com,GlobalStreaming
+  - DOMAIN-SUFFIX,atv-ext.amazon.com,GlobalStreaming
+  - DOMAIN-SUFFIX,atv-ps-eu.amazon.co.uk,GlobalStreaming
+  - DOMAIN-SUFFIX,atv-ps-eu.amazon.com,GlobalStreaming
+  - DOMAIN-SUFFIX,atv-ps-fe.amazon.co.jp,GlobalStreaming
+  - DOMAIN-SUFFIX,atv-ps-fe.amazon.com,GlobalStreaming
+  - DOMAIN-SUFFIX,atv-ps.amazon.com,GlobalStreaming
+  - DOMAIN-SUFFIX,avodmp4s3ww-a.akamaihd.net,GlobalStreaming
+
+  # ========== China Streaming (from clash2) ==========
+  - DOMAIN-SUFFIX,acg.tv,ChinaStreaming
+  - DOMAIN-SUFFIX,acgvideo.com,ChinaStreaming
+  - DOMAIN-SUFFIX,animetamashi.cn,ChinaStreaming
+  - DOMAIN-SUFFIX,animetamashi.com,ChinaStreaming
+  - DOMAIN-SUFFIX,anitama.cn,ChinaStreaming
+  - DOMAIN-SUFFIX,anitama.net,ChinaStreaming
+  - DOMAIN-SUFFIX,b23.tv,ChinaStreaming
+  - DOMAIN-SUFFIX,baka.im,ChinaStreaming
+  - DOMAIN-SUFFIX,bigfun.cn,ChinaStreaming
+  - DOMAIN-SUFFIX,bigfunapp.cn,ChinaStreaming
+  - DOMAIN-SUFFIX,bili22.cn,ChinaStreaming
+  - DOMAIN-SUFFIX,bili2233.cn,ChinaStreaming
+  - DOMAIN-SUFFIX,bili23.cn,ChinaStreaming
+  - DOMAIN-SUFFIX,bili33.cn,ChinaStreaming
+  - DOMAIN-SUFFIX,biliapi.com,ChinaStreaming
+  - DOMAIN-SUFFIX,biliapi.net,ChinaStreaming
+  - DOMAIN-SUFFIX,bilibili.cc,ChinaStreaming
+  - DOMAIN-SUFFIX,bilibili.cn,ChinaStreaming
+  - DOMAIN-SUFFIX,bilibili.co,ChinaStreaming
+  - DOMAIN-SUFFIX,bilibili.com,ChinaStreaming
+  - DOMAIN-SUFFIX,bilibili.net,ChinaStreaming
+  - DOMAIN-SUFFIX,bilibili.tv,ChinaStreaming
+  - DOMAIN-SUFFIX,bilibiligame.cn,ChinaStreaming
+  - DOMAIN-SUFFIX,bilibiligame.co,ChinaStreaming
+  - DOMAIN-SUFFIX,bilibiligame.net,ChinaStreaming
+  - DOMAIN-SUFFIX,bilibilipay.cn,ChinaStreaming
+  - DOMAIN-SUFFIX,bilibilipay.com,ChinaStreaming
+  - DOMAIN-SUFFIX,bilicdn1.com,ChinaStreaming
+  - DOMAIN-SUFFIX,bilicdn2.com,ChinaStreaming
+  - DOMAIN-SUFFIX,bilicdn3.com,ChinaStreaming
+  - DOMAIN-SUFFIX,bilicdn4.com,ChinaStreaming
+  - DOMAIN-SUFFIX,bilicdn5.com,ChinaStreaming
+  - DOMAIN-SUFFIX,bilicomics.com,ChinaStreaming
+  - DOMAIN-SUFFIX,biligame.cn,ChinaStreaming
+  - DOMAIN-SUFFIX,biligame.co,ChinaStreaming
+  - DOMAIN-SUFFIX,biligame.com,ChinaStreaming
+  - DOMAIN-SUFFIX,biligame.net,ChinaStreaming
+  - DOMAIN-SUFFIX,biligo.com,ChinaStreaming
+  - DOMAIN-SUFFIX,biliimg.com,ChinaStreaming
+  - DOMAIN-SUFFIX,biliintl.co,ChinaStreaming
+  - DOMAIN-SUFFIX,biliintl.com,ChinaStreaming
+  - DOMAIN-SUFFIX,biliplus.com,ChinaStreaming
+  - DOMAIN-SUFFIX,bilivideo.cn,ChinaStreaming
+  - DOMAIN-SUFFIX,bilivideo.com,ChinaStreaming
+  - DOMAIN-SUFFIX,bilivideo.net,ChinaStreaming
+  - DOMAIN-SUFFIX,corari.com,ChinaStreaming
+  - DOMAIN-SUFFIX,dreamcast.hk,ChinaStreaming
+  - DOMAIN-SUFFIX,dyhgames.com,ChinaStreaming
+  - DOMAIN-SUFFIX,hdslb.com,ChinaStreaming
+  - DOMAIN-SUFFIX,hdslb.com.w.kunlunhuf.com,ChinaStreaming
+  - DOMAIN-SUFFIX,hdslb.com.w.kunlunpi.com,ChinaStreaming
+  - DOMAIN-SUFFIX,hdslb.net,ChinaStreaming
+  - DOMAIN-SUFFIX,hdslb.org,ChinaStreaming
+  - DOMAIN-SUFFIX,im9.com,ChinaStreaming
+  - DOMAIN-SUFFIX,maoercdn.com,ChinaStreaming
+  - DOMAIN-SUFFIX,mcbbs.net,ChinaStreaming
+  - DOMAIN-SUFFIX,mincdn.com,ChinaStreaming
+  - DOMAIN-SUFFIX,sharejoytech.com,ChinaStreaming
+  - DOMAIN-SUFFIX,smtcdns.net,ChinaStreaming
+  - DOMAIN-SUFFIX,upos-hz-mirrorakam.akamaized.net,ChinaStreaming
 
   # ========== LAN ==========
   - IP-CIDR,127.0.0.0/8,DIRECT
