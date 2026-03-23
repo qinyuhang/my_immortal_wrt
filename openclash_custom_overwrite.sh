@@ -3,32 +3,86 @@
 . /usr/share/openclash/log.sh
 . /lib/functions.sh
 
-# This script is called by /etc/init.d/openclash
-# Add your custom overwrite scripts here, they will be take effict after the OpenClash own srcipts
-
 LOG_OUT "Tip: Start Running Custom Overwrite Scripts..."
 LOGTIME=$(echo $(date "+%Y-%m-%d %H:%M:%S"))
 LOG_FILE="/tmp/openclash.log"
-#Config Path
 CONFIG_FILE="$1"
 
-# ==================== 添加自定义 URL-Test Proxy Groups（含节点筛选）====================
-LOG_OUT "Tip: 添加自定义 URL-Test Proxy Groups..."
+# ==================== 多订阅合并配置 ====================
+# 在这里添加其他订阅的本地路径或URL
+# 格式: "订阅名称|路径或URL"
+# 支持本地文件路径或http/https订阅链接
+ADDITIONAL_SUBSCRIPTIONS=""
+# 示例:
+# ADDITIONAL_SUBSCRIPTIONS="sub2|/etc/openclash/config/sub2.yaml sub3|https://example.com/sub3.yaml"
+# ======================================================
 
-# 使用 Ruby 脚本处理节点筛选和 Group 创建
+LOG_OUT "Tip: 开始处理多订阅合并..."
+
+# 使用 Ruby 处理配置合并和 Smart Groups 创建
 ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
+    require 'open-uri'
+    require 'uri'
+    
     begin
         Value = YAML.load_file('$CONFIG_FILE');
     rescue Exception => e
-        puts '${LOGTIME} Error: Load File Failed,【' + e.message + '】';
+        puts '${LOGTIME} Error: Load Main Config Failed,【' + e.message + '】';
         exit 1;
     end;
 
     begin
-        # 获取所有代理节点名称
-        all_proxies = Value['proxies']&.map { |p| p['name'] } || []
+        all_proxies = Value['proxies'] || []
+        existing_proxy_names = all_proxies.map { |p| p['name'] }.to_set
         
-        # 定义地区匹配规则: 名称 -> [正则匹配模式]
+        # 处理额外的订阅
+        additional_subs = '$ADDITIONAL_SUBSCRIPTIONS'.strip.split
+        additional_subs.each do |sub_info|
+            parts = sub_info.split('|', 2)
+            next if parts.length < 2
+            
+            sub_name = parts[0]
+            sub_path = parts[1]
+            
+            begin
+                puts '${LOGTIME} Info: 正在加载订阅: ' + sub_name;
+                
+                # 判断是 URL 还是本地文件
+                if sub_path.start_with?('http://', 'https://')
+                    # 下载订阅内容
+                    sub_content = URI.open(sub_path, 
+                        'User-Agent' => 'ClashMetaForAndroid/2.11.7.Meta',
+                        :read_timeout => 30
+                    ).read
+                    sub_config = YAML.load(sub_content)
+                else
+                    # 读取本地文件
+                    sub_config = YAML.load_file(sub_path)
+                end
+                
+                # 合并 proxies，去重
+                if sub_config['proxies']
+                    sub_config['proxies'].each do |proxy|
+                        unless existing_proxy_names.include?(proxy['name'])
+                            all_proxies << proxy
+                            existing_proxy_names.add(proxy['name'])
+                        end
+                    end
+                    puts '${LOGTIME} Info: ' + sub_name + ' 添加了 ' + sub_config['proxies'].length.to_s + ' 个节点';
+                end
+                
+            rescue Exception => e
+                puts '${LOGTIME} Warning: 加载订阅 ' + sub_name + ' 失败,【' + e.message + '】';
+            end
+        end
+        
+        # 更新主配置的 proxies
+        Value['proxies'] = all_proxies
+        
+        # ==================== 创建地区 Smart Groups ====================
+        all_proxy_names = all_proxies.map { |p| p['name'] }
+        
+        # 定义地区匹配规则
         region_rules = {
             'HK' => ['香港', 'HK', 'HongKong', 'hongkong', 'Hongkong'],
             'TW' => ['台湾', 'TW'],
@@ -37,26 +91,23 @@ ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
             'US' => ['美国', 'US']
         }
         
-        # 排除规则：排除包含这些关键词的节点
         exclude_patterns = ['仅海外用户', '游戏']
         
-        # 为每个地区创建筛选后的节点列表
+        # 筛选节点
         region_proxies = {}
         new_group_names = region_rules.keys
         
         region_rules.each do |region, patterns|
-            matched = all_proxies.select do |name|
-                # 检查是否匹配地区模式（不区分大小写）
+            matched = all_proxy_names.select do |name|
                 matches_region = patterns.any? { |p| name =~ /#{p}/i }
-                # 检查是否包含排除关键词
                 excluded = exclude_patterns.any? { |ep| name.include?(ep) }
                 matches_region && !excluded
             end
             region_proxies[region] = matched.empty? ? ['DIRECT'] : matched
-            puts '${LOGTIME} Info: 【' + region + '】Group 添加 ' + region_proxies[region].length.to_s + ' 个节点';
+            puts '${LOGTIME} Info: 【' + region + '】Group 匹配 ' + region_proxies[region].length.to_s + ' 个节点';
         end
         
-        # 创建 proxy-groups
+        # 创建新的 proxy-groups
         new_groups = []
         region_proxies.each do |region, proxies|
             new_groups << {
@@ -68,32 +119,25 @@ ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
             }
         end
         
-        # 将新 groups 插入到原有 proxy-groups 前面
+        # 合并到原有 proxy-groups 前面
         existing_groups = Value['proxy-groups'] || []
         Value['proxy-groups'] = new_groups + existing_groups
         
-        # 将新 group 添加到所有 select 类型的 group 中
-        # 对于"手动切换"，放到最前面
-        # 对于其他 selector，放到"手动切换"之后（避免改变默认选中）
+        # 将新 group 添加到 select 类型的 group 中
         new_group_names.reverse.each do |new_group|
             existing_groups.each do |group|
                 if group['type'] == 'select' && group['proxies'].is_a?(Array)
-                    # 删除已存在的（避免重复）
                     group['proxies'].delete(new_group)
                     
-                    # 判断是否是"手动切换"（通常是第一个 select group 或名称包含手动）
                     is_manual_switch = group['name'].include?('手动') || group['name'].include?('手动切换')
                     
                     if is_manual_switch
-                        # 手动切换：插入到最前面
                         group['proxies'].unshift(new_group)
                     else
-                        # 其他 selector：找到"手动切换"的位置，插入到其后
                         manual_index = group['proxies'].find_index { |p| p.to_s.include?('手动') }
                         if manual_index
                             group['proxies'].insert(manual_index + 1, new_group)
                         else
-                            # 如果没找到手动切换，还是放到最前面（但这种情况应该很少）
                             group['proxies'].unshift(new_group)
                         end
                     end
@@ -101,16 +145,14 @@ ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
             end
         end
         
-        puts '${LOGTIME} Info: 已将新 Groups 添加到策略组中（手动切换在最前，其他在手动切换后）';
+        puts '${LOGTIME} Info: 配置合并完成，共 ' + all_proxies.length.to_s + ' 个节点';
         
     rescue Exception => e
-        puts '${LOGTIME} Error: Create Smart Groups Failed,【' + e.message + '】';
+        puts '${LOGTIME} Error: Merge Config Failed,【' + e.message + '】';
     ensure
         File.open('$CONFIG_FILE','w') {|f| YAML.dump(Value, f)};
     end
 " 2>/dev/null >> $LOG_FILE
 
-LOG_OUT "Tip: URL-Test Proxy Groups 添加完成"
-# ======================================================================
-
+LOG_OUT "Tip: Custom Overwrite Scripts Finished"
 exit 0
