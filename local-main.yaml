@@ -1,47 +1,38 @@
-# ==========================================
-# OpenClash 本地主配置文件
-# 方案：本地主配置 + 远程 Proxy Providers
-# ==========================================
+# OpenClash Local Main Config with Proxy Providers + SukkaW Rules
+# Based on clash2 format
 
-# 基础配置
-mixed-port: 7890
+port: 7890
 socks-port: 7891
 redir-port: 7892
 tproxy-port: 7895
+mixed-port: 7893
 external-controller: 0.0.0.0:9090
-external-ui: /usr/share/openclash/ui
+# external-ui disabled for docker test
 secret: "your-password-here"
 
-# 日志级别
+mode: rule
 log-level: info
 ipv6: false
-
-# TCP 并发连接
+allow-lan: true
 tcp-concurrent: true
 enable-process: true
 find-process-mode: strict
 unified-delay: true
 
-# ==========================================
-# DNS 配置
-# ==========================================
 dns:
   enable: true
   listen: 0.0.0.0:7874
+  ipv6: false
+  default-nameserver:
+    - 223.5.5.5
+    - 119.29.29.29
+    - 1.1.1.1
   enhanced-mode: fake-ip
   fake-ip-range: 198.18.0.1/16
-  fake-ip-filter:
-    - "*.lan"
-    - "*.local"
-    - "*.internal"
-    - "*.localhost"
-    - "*.test"
-    - "*.home"
-    - "msftconnecttest.com"
-    - "msftncsi.com"
   nameserver:
     - 223.5.5.5
     - 119.29.29.29
+    - dhcp://system
     - https://dns.alidns.com/dns-query
   fallback:
     - https://1.1.1.1/dns-query
@@ -50,14 +41,13 @@ dns:
     geoip: true
     geoip-code: CN
     ipcidr:
+      - 0.0.0.0/32
+      - 100.64.0.0/10
+      - 127.0.0.0/8
       - 240.0.0.0/4
 
-# ==========================================
-# Proxy Providers（远程订阅）
-# ==========================================
 proxy-providers:
-  # 机场 A - 主力订阅
-  "机场A":
+  Airport-A:
     type: http
     url: "https://your-subscription-url-1"
     path: ./proxy_providers/provider_a.yaml
@@ -67,8 +57,7 @@ proxy-providers:
       url: http://www.gstatic.com/generate_204
       interval: 300
       
-  # 机场 B - 备用订阅
-  "机场B":
+  Airport-B:
     type: http
     url: "https://your-subscription-url-2"
     path: ./proxy_providers/provider_b.yaml
@@ -78,11 +67,7 @@ proxy-providers:
       url: http://www.gstatic.com/generate_204
       interval: 300
 
-# ==========================================
-# Rule Providers（SukkaW 规则集）
-# ==========================================
 rule-providers:
-  # Reject 规则 - 广告拦截
   reject-drop:
     type: http
     behavior: classical
@@ -115,7 +100,6 @@ rule-providers:
     path: ./rule_providers/reject-ip.yaml
     interval: 86400
 
-  # DOMAIN-SET 转换为 domain 类型的 rule-provider
   reject-domain:
     type: http
     behavior: domain
@@ -132,316 +116,234 @@ rule-providers:
     path: ./rule_providers/reject-domain-extra.yaml
     interval: 86400
 
-# ==========================================
-# Proxy Groups（策略组）
-# ==========================================
 proxy-groups:
-  # 手动选择
-  - name: "手动切换"
+  - name: Manual
     type: select
     use:
-      - "机场A"
-      - "机场B"
+      - Airport-A
+      - Airport-B
     proxies:
       - DIRECT
       - REJECT
 
-  # 自动选择
-  - name: "自动选择"
+  - name: Auto
     type: url-test
     use:
-      - "机场A"
-      - "机场B"
+      - Airport-A
+      - Airport-B
     url: http://www.gstatic.com/generate_204
     interval: 300
     tolerance: 50
 
-  # 故障转移
-  - name: "故障转移"
-    type: fallback
-    use:
-      - "机场A"
-      - "机场B"
-    url: http://www.gstatic.com/generate_204
-    interval: 300
-
-  # ==========================================
-  # 地区分组（带 filter 筛选）
-  # ==========================================
-  
-  # 香港节点
-  - name: "HK"
+  - name: HK
     type: url-test
     use:
-      - "机场A"
-      - "机场B"
+      - Airport-A
+      - Airport-B
     filter: "(?i)^(?!.*仅海外用户)(?!.*游戏).*(香港|HK|HongKong)"
     url: http://www.gstatic.com/generate_204
     interval: 300
 
-  # 台湾节点
-  - name: "TW"
+  - name: TW
     type: url-test
     use:
-      - "机场A"
-      - "机场B"
+      - Airport-A
+      - Airport-B
     filter: "(?i)^(?!.*仅海外用户)(?!.*游戏).*(台湾|TW)"
     url: http://www.gstatic.com/generate_204
     interval: 300
 
-  # 新加坡节点
-  - name: "SG"
+  - name: SG
     type: url-test
     use:
-      - "机场A"
-      - "机场B"
+      - Airport-A
+      - Airport-B
     filter: "(?i)^(?!.*仅海外用户)(?!.*游戏).*(新加坡|SG|singapore)"
     url: http://www.gstatic.com/generate_204
     interval: 300
 
-  # 日本节点
-  - name: "JP"
+  - name: JP
     type: url-test
     use:
-      - "机场A"
-      - "机场B"
+      - Airport-A
+      - Airport-B
     filter: "(?i)^(?!.*仅海外用户)(?!.*游戏).*(日本|JP|Japan)"
     url: http://www.gstatic.com/generate_204
     interval: 300
 
-  # 美国节点
-  - name: "US"
+  - name: US
     type: url-test
     use:
-      - "机场A"
-      - "机场B"
+      - Airport-A
+      - Airport-B
     filter: "(?i)^(?!.*仅海外用户)(?!.*游戏).*(美国|US)"
     url: http://www.gstatic.com/generate_204
     interval: 300
 
-  # ==========================================
-  # 应用场景分组
-  # ==========================================
-  
-  - name: "Google"
+  - name: Google
     type: select
     proxies:
-      - "手动切换"
-      - "HK"
-      - "TW"
-      - "SG"
-      - "JP"
-      - "US"
-      - "自动选择"
+      - Manual
+      - HK
+      - TW
+      - SG
+      - JP
+      - US
+      - Auto
       - DIRECT
-      - REJECT
 
-  - name: "Telegram"
+  - name: YouTube
     type: select
     proxies:
-      - "手动切换"
-      - "HK"
-      - "TW"
-      - "SG"
-      - "JP"
-      - "US"
-      - "自动选择"
+      - Manual
+      - HK
+      - TW
+      - SG
+      - JP
+      - US
+      - Auto
       - DIRECT
-      - REJECT
 
-  - name: "YouTube"
+  - name: Netflix
     type: select
     proxies:
-      - "手动切换"
-      - "HK"
-      - "TW"
-      - "SG"
-      - "JP"
-      - "US"
-      - "自动选择"
+      - Manual
+      - HK
+      - TW
+      - SG
+      - JP
+      - US
+      - Auto
       - DIRECT
-      - REJECT
 
-  - name: "Netflix"
+  - name: OpenAI
     type: select
     proxies:
-      - "手动切换"
-      - "HK"
-      - "TW"
-      - "SG"
-      - "JP"
-      - "US"
-      - "自动选择"
+      - US
+      - Manual
+      - JP
+      - SG
+      - Auto
       - DIRECT
-      - REJECT
 
-  - name: "OpenAI"
+  - name: Telegram
     type: select
     proxies:
-      - "US"
-      - "手动切换"
-      - "自动选择"
-      - "HK"
-      - "TW"
-      - "SG"
-      - "JP"
+      - Manual
+      - HK
+      - SG
+      - Auto
       - DIRECT
-      - REJECT
 
-  - name: "微软服务"
+  - name: Github
     type: select
     proxies:
+      - Manual
+      - HK
+      - TW
+      - SG
+      - JP
+      - US
+      - Auto
       - DIRECT
-      - "手动切换"
-      - "HK"
-      - "TW"
-      - "SG"
-      - "JP"
-      - "US"
-      - "自动选择"
 
-  - name: "苹果服务"
+  - name: Microsoft
     type: select
     proxies:
       - DIRECT
-      - "手动切换"
-      - "HK"
-      - "TW"
-      - "SG"
-      - "JP"
-      - "US"
-      - "自动选择"
+      - Manual
+      - HK
+      - TW
+      - SG
+      - JP
+      - US
+      - Auto
 
-# ==========================================
-# Rules（分流规则 - SukkaW 规则集）
-# ==========================================
+  - name: Apple
+    type: select
+    proxies:
+      - DIRECT
+      - Manual
+      - HK
+      - TW
+      - SG
+      - JP
+      - US
+      - Auto
+
+  - name: TimeSync
+    type: select
+    proxies:
+      - DIRECT
+      - Manual
+      - Auto
+
 rules:
-  # ==========================================
-  # SukkaW 广告拦截规则（优先级最高）
-  # ==========================================
-  # DOMAIN-SET 规则（behavior: domain）
+  # ========== SukkaW 广告拦截规则 ==========
   - RULE-SET,reject-domain,REJECT
   - RULE-SET,reject-domain-extra,REJECT
-  
-  # RULE-SET 规则（behavior: classical）
   - RULE-SET,reject-drop,REJECT
   - RULE-SET,reject,REJECT
   - RULE-SET,reject-no-drop,REJECT
   - RULE-SET,reject-ip,REJECT,no-resolve
 
-  # ==========================================
-  # 局域网直连
-  # ==========================================
+  # ========== Time Sync ==========
+  - DOMAIN-SUFFIX,time.nist.gov,TimeSync
+  - DOMAIN-SUFFIX,pool.ntp.org,TimeSync
+  - DOMAIN-SUFFIX,ntp.aliyun.com,TimeSync
+  - DOMAIN-SUFFIX,time.apple.com,TimeSync
+  - DOMAIN-SUFFIX,time.windows.com,TimeSync
+
+  # ========== OpenAI ==========
+  - DOMAIN-SUFFIX,ai.com,OpenAI
+  - DOMAIN-SUFFIX,chatgpt.com,OpenAI
+  - DOMAIN-SUFFIX,openai.com,OpenAI
+  - DOMAIN-SUFFIX,auth0.com,OpenAI
+  - DOMAIN-SUFFIX,claude.ai,OpenAI
+  - DOMAIN-KEYWORD,openai,OpenAI
+
+  # ========== Google ==========
+  - DOMAIN-KEYWORD,google,Google
+  - DOMAIN-SUFFIX,youtube.com,YouTube
+  - DOMAIN-SUFFIX,ytimg.com,YouTube
+  - DOMAIN-SUFFIX,googlevideo.com,YouTube
+
+  # ========== Netflix ==========
+  - DOMAIN-KEYWORD,netflix,Netflix
+  - DOMAIN-SUFFIX,nflxvideo.net,Netflix
+  - DOMAIN-SUFFIX,nflxso.net,Netflix
+
+  # ========== Telegram ==========
+  - DOMAIN-SUFFIX,telegram.org,Telegram
+  - DOMAIN-SUFFIX,telegram.me,Telegram
+  - DOMAIN-SUFFIX,t.me,Telegram
+  - IP-CIDR,149.154.160.0/20,Telegram,no-resolve
+
+  # ========== Github ==========
+  - DOMAIN-SUFFIX,github.com,Github
+  - DOMAIN-SUFFIX,githubusercontent.com,Github
+  - DOMAIN-KEYWORD,github,Github
+
+  # ========== Microsoft ==========
+  - DOMAIN-KEYWORD,microsoft,Microsoft
+  - DOMAIN-SUFFIX,msn.com,Microsoft
+  - DOMAIN-SUFFIX,live.com,Microsoft
+  - DOMAIN-SUFFIX,office.com,Microsoft
+
+  # ========== Apple ==========
+  - DOMAIN-SUFFIX,apple.com,Apple
+  - DOMAIN-SUFFIX,icloud.com,Apple
+  - DOMAIN-SUFFIX,me.com,Apple
+
+  # ========== LAN ==========
   - IP-CIDR,127.0.0.0/8,DIRECT
   - IP-CIDR,172.16.0.0/12,DIRECT
   - IP-CIDR,192.168.0.0/16,DIRECT
   - IP-CIDR,10.0.0.0/8,DIRECT
-  - IP-CIDR,100.64.0.0/10,DIRECT
-  - IP-CIDR,224.0.0.0/4,DIRECT
-  - IP-CIDR,fe80::/10,DIRECT
-  - IP-CIDR,fd00::/8,DIRECT
-  
-  # ==========================================
-  # 微软服务
-  # ==========================================
-  - DOMAIN-KEYWORD,microsoft,"微软服务"
-  - DOMAIN-KEYWORD,windows,"微软服务"
-  - DOMAIN-KEYWORD,xbox,"微软服务"
-  - DOMAIN-KEYWORD,skype,"微软服务"
-  - DOMAIN-KEYWORD,outlook,"微软服务"
-  - DOMAIN-SUFFIX,msn.com,"微软服务"
-  - DOMAIN-SUFFIX,hotmail.com,"微软服务"
-  - DOMAIN-SUFFIX,live.com,"微软服务"
-  
-  # ==========================================
-  # 苹果服务
-  # ==========================================
-  - DOMAIN-SUFFIX,apple.com,"苹果服务"
-  - DOMAIN-SUFFIX,icloud.com,"苹果服务"
-  - DOMAIN-SUFFIX,me.com,"苹果服务"
-  - DOMAIN-SUFFIX,mzstatic.com,"苹果服务"
-  - DOMAIN-SUFFIX,akadns.net,"苹果服务"
-  
-  # ==========================================
-  # OpenAI/ChatGPT
-  # ==========================================
-  - DOMAIN-KEYWORD,openai,"OpenAI"
-  - DOMAIN-SUFFIX,chatgpt.com,"OpenAI"
-  - DOMAIN-SUFFIX,auth0.com,"OpenAI"
-  - DOMAIN-SUFFIX,openai.com,"OpenAI"
-  - DOMAIN-SUFFIX,ai.com,"OpenAI"
-  - DOMAIN-SUFFIX,intercom.io,"OpenAI"
-  - DOMAIN-SUFFIX,featuregates.org,"OpenAI"
-  
-  # ==========================================
-  # Google
-  # ==========================================
-  - DOMAIN-KEYWORD,google,"Google"
-  - DOMAIN-KEYWORD,gmail,"Google"
-  - DOMAIN-SUFFIX,youtube.com,"YouTube"
-  - DOMAIN-SUFFIX,ytimg.com,"YouTube"
-  - DOMAIN-SUFFIX,ggpht.com,"YouTube"
-  - DOMAIN-SUFFIX,googlevideo.com,"YouTube"
-  
-  # ==========================================
-  # Netflix
-  # ==========================================
-  - DOMAIN-KEYWORD,netflix,"Netflix"
-  - DOMAIN-SUFFIX,nflxvideo.net,"Netflix"
-  - DOMAIN-SUFFIX,nflxso.net,"Netflix"
-  - DOMAIN-SUFFIX,nflxext.com,"Netflix"
-  
-  # ==========================================
-  # Telegram
-  # ==========================================
-  - DOMAIN-SUFFIX,telegram.org,"Telegram"
-  - DOMAIN-SUFFIX,telegram.me,"Telegram"
-  - DOMAIN-SUFFIX,t.me,"Telegram"
-  - DOMAIN-SUFFIX,tdesktop.com,"Telegram"
-  - IP-CIDR,149.154.160.0/20,"Telegram"
-  - IP-CIDR,67.198.55.0/24,"Telegram"
-  - IP-CIDR,91.108.4.0/22,"Telegram"
-  - IP-CIDR,91.108.8.0/22,"Telegram"
-  - IP-CIDR,91.108.12.0/22,"Telegram"
-  - IP-CIDR,91.108.16.0/22,"Telegram"
-  - IP-CIDR,91.108.20.0/22,"Telegram"
-  - IP-CIDR,91.108.56.0/22,"Telegram"
-  - IP-CIDR,109.239.140.0/24,"Telegram"
-  
-  # ==========================================
-  # 其他常见国外网站
-  # ==========================================
-  - DOMAIN-KEYWORD,github,"手动切换"
-  - DOMAIN-SUFFIX,github.com,"手动切换"
-  - DOMAIN-SUFFIX,githubusercontent.com,"手动切换"
-  - DOMAIN-KEYWORD,twitter,"手动切换"
-  - DOMAIN-SUFFIX,x.com,"手动切换"
-  - DOMAIN-SUFFIX,t.co,"手动切换"
-  - DOMAIN-SUFFIX,instagram.com,"手动切换"
-  - DOMAIN-SUFFIX,facebook.com,"手动切换"
-  - DOMAIN-SUFFIX,whatsapp.com,"手动切换"
-  - DOMAIN-SUFFIX,spotify.com,"手动切换"
-  - DOMAIN-SUFFIX,discord.com,"手动切换"
-  - DOMAIN-SUFFIX,reddit.com,"手动切换"
-  - DOMAIN-SUFFIX,tiktok.com,"手动切换"
-  
-  # ==========================================
-  # 国内直连（常用）
-  # ==========================================
-  - DOMAIN-KEYWORD,baidu,DIRECT
-  - DOMAIN-KEYWORD,alipay,DIRECT
-  - DOMAIN-KEYWORD,taobao,DIRECT
-  - DOMAIN-KEYWORD,jd,DIRECT
-  - DOMAIN-KEYWORD,163,DIRECT
-  - DOMAIN-SUFFIX,cn,DIRECT
-  
-  # ==========================================
-  # GEOIP 分流
-  # ==========================================
+
+  # ========== GEOIP ==========
   - GEOIP,CN,DIRECT
   - GEOIP,private,DIRECT,no-resolve
-  
-  # ==========================================
-  # 兜底规则
-  # ==========================================
-  - MATCH,"手动切换"
+
+  # ========== Final ==========
+  - MATCH,Manual
