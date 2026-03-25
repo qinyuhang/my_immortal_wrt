@@ -107,9 +107,17 @@ ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
             puts '${LOGTIME} Info: 【' + region + '】Group 匹配 ' + region_proxies[region].length.to_s + ' 个节点';
         end
         
-        # 创建新的 proxy-groups
+        # 获取原有 proxy-groups
+        existing_groups = Value['proxy-groups'] || []
+        existing_group_names = existing_groups.map { |g| g['name'] }.to_set
+        
+        # 创建新的 proxy-groups（只创建不存在的）
         new_groups = []
         region_proxies.each do |region, proxies|
+            if existing_group_names.include?(region)
+                puts '${LOGTIME} Info: 【' + region + '】Group 已存在，跳过创建';
+                next
+            end
             new_groups << {
                 'name' => region,
                 'type' => 'url-test',
@@ -120,25 +128,25 @@ ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
         end
         
         # 合并到原有 proxy-groups 前面
-        existing_groups = Value['proxy-groups'] || []
         Value['proxy-groups'] = new_groups + existing_groups
         
-        # 将新 group 添加到 select 类型的 group 中
-        new_group_names.reverse.each do |new_group|
+        # 将新 group 添加到 select 类型的 group 中（只添加新创建的）
+        new_groups.reverse.each do |new_group|
+            new_group_name = new_group['name']
             existing_groups.each do |group|
                 if group['type'] == 'select' && group['proxies'].is_a?(Array)
-                    group['proxies'].delete(new_group)
+                    group['proxies'].delete(new_group_name)
                     
                     is_manual_switch = group['name'].include?('手动') || group['name'].include?('手动切换')
                     
                     if is_manual_switch
-                        group['proxies'].unshift(new_group)
+                        group['proxies'].unshift(new_group_name)
                     else
                         manual_index = group['proxies'].find_index { |p| p.to_s.include?('手动') }
                         if manual_index
-                            group['proxies'].insert(manual_index + 1, new_group)
+                            group['proxies'].insert(manual_index + 1, new_group_name)
                         else
-                            group['proxies'].unshift(new_group)
+                            group['proxies'].unshift(new_group_name)
                         end
                     end
                 end
