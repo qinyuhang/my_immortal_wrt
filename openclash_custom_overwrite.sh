@@ -141,6 +141,9 @@ ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
                     
                     if is_manual_switch
                         group['proxies'].unshift(new_group_name)
+                        unless group['proxies'].include?('DIRECT')
+                            group['proxies'].unshift('DIRECT')
+                        end
                     else
                         manual_index = group['proxies'].find_index { |p| p.to_s.include?('手动') }
                         if manual_index
