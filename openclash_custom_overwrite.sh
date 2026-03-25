@@ -130,6 +130,53 @@ ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
         # 合并到原有 proxy-groups 前面
         Value['proxy-groups'] = new_groups + existing_groups
         
+        # 查找"手动切换" group 并创建"Proxy" group
+        manual_switch_group = existing_groups.find { |g| g['name'].include?('手动') || g['name'].include?('手动切换') }
+        
+        unless existing_group_names.include?('Proxy')
+            if manual_switch_group && manual_switch_group['proxies'].is_a?(Array)
+                # 找到"手动切换"，创建与其完全一致的 Proxy group
+                proxy_group = {
+                    'name' => 'Proxy',
+                    'type' => manual_switch_group['type'] || 'select',
+                    'proxies' => manual_switch_group['proxies'].dup
+                }
+                
+                # 复制其他可能的属性（如果有）
+                proxy_group['url'] = manual_switch_group['url'] if manual_switch_group['url']
+                proxy_group['interval'] = manual_switch_group['interval'] if manual_switch_group['interval']
+                proxy_group['tolerance'] = manual_switch_group['tolerance'] if manual_switch_group['tolerance']
+                proxy_group['lazy'] = manual_switch_group['lazy'] if manual_switch_group.key?('lazy')
+                proxy_group['disable-udp'] = manual_switch_group['disable-udp'] if manual_switch_group.key?('disable-udp')
+                
+                # 将 Proxy group 添加到 proxy-groups 列表开头
+                existing_groups.unshift(proxy_group)
+                existing_group_names.add('Proxy')
+                puts '${LOGTIME} Info: 已创建 Proxy group，内容与【' + manual_switch_group['name'] + '】一致';
+            else
+                # 未找到"手动切换"，创建包含 DIRECT + 地区 groups + 所有节点的 Proxy group
+                region_group_names = ['HK', 'TW', 'SG', 'JP', 'US']
+                # 筛选出存在的地区 group
+                available_region_groups = region_group_names.select { |name| existing_group_names.include?(name) }
+                
+                # 构建 proxies 列表：DIRECT + 地区 groups + 所有原始节点
+                proxy_proxies = ['DIRECT'] + available_region_groups + all_proxy_names
+                
+                proxy_group = {
+                    'name' => 'Proxy',
+                    'type' => 'select',
+                    'proxies' => proxy_proxies
+                }
+                
+                # 将 Proxy group 添加到 proxy-groups 列表开头
+                existing_groups.unshift(proxy_group)
+                existing_group_names.add('Proxy')
+                puts '${LOGTIME} Info: 未找到"手动切换"，已创建 Proxy group，包含 DIRECT + 地区groups(' + available_region_groups.length.to_s + ') + 所有节点(' + all_proxy_names.length.to_s + ')';
+            end
+        else
+            puts '${LOGTIME} Info: Proxy group 已存在，跳过创建';
+        end
+        
         # 将新 group 添加到 select 类型的 group 中（只添加新创建的）
         new_groups.reverse.each do |new_group|
             new_group_name = new_group['name']
@@ -138,16 +185,20 @@ ruby -ryaml -rYAML -I "/usr/share/openclash" -E UTF-8 -e "
                     group['proxies'].delete(new_group_name)
                     
                     is_manual_switch = group['name'].include?('手动') || group['name'].include?('手动切换')
+                    is_proxy = group['name'] == 'Proxy'
                     
-                    if is_manual_switch
+                    if is_manual_switch || is_proxy
                         group['proxies'].unshift(new_group_name)
                         unless group['proxies'].include?('DIRECT')
                             group['proxies'].unshift('DIRECT')
                         end
                     else
                         manual_index = group['proxies'].find_index { |p| p.to_s.include?('手动') }
-                        if manual_index
-                            group['proxies'].insert(manual_index + 1, new_group_name)
+                        proxy_index = group['proxies'].find_index { |p| p == 'Proxy' }
+                        insert_index = [manual_index, proxy_index].compact.min
+                        
+                        if insert_index
+                            group['proxies'].insert(insert_index + 1, new_group_name)
                         else
                             group['proxies'].unshift(new_group_name)
                         end
